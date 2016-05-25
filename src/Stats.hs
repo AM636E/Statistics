@@ -19,7 +19,7 @@ nDjun s = 0.51 * sqrt (fromIntegral $ size s )
 
 intervalWidth :: (Selection -> Float) -> Selection -> Float
 intervalWidth _ [] = 0
-intervalWidth f s = (max / min) / f s
+intervalWidth f s = round' 2 ((max / min) / f s)
     where
         max = maximum (map maximum s)
         min = minimum  (map minimum s)
@@ -32,9 +32,9 @@ allInRange f start a =
 
 groupSelection :: (Selection -> Float) -> Selection -> [((Float, Float), [Float])]
 groupSelection _ [] = []
-groupSelection f a = [ tupleInRange x | x <- [0,iw..max'] ]
+groupSelection f a = [ tupleInRange $ round' 2 x | x <- [0,iw..max'] ]
     where
-        tupleInRange start = ( (start, start + iw), allInRange f start a )
+        tupleInRange start = ( (round' 2 start, round' 2 (start + iw)), map (round' 2) $ allInRange f start a )
         width = length (head a) -- selection is rectangular.
         iw = intervalWidth f a
         max' = maximum (map maximum a)
@@ -51,8 +51,7 @@ realData = [
  ,[7.7,5.4,6.9,7.6,5.6,6.2,7.7,5.7,6.3,7.3]
  ,[6.4,6.6,6.5,6.8,6.2,5.5,6.1,7.4,5.5,6.9]
  ,[2.4,3.6,3.7,4.7,9.8,4.9,5.5,6.5,7.4,7.9]
- ,[ x + 0.2 | x <- [2.6,3.8,3.9,4.9,5.0] ] ++
-  [ x - 0.2 | x <- [4.7,5.3,6.3,7.2,7.7] ]]
+ ,[ x + 0.2 | x <- [2.6,3.8,3.9,4.9,5.0] ] ++ [ x - 0.2 | x <- [4.7,5.3,6.3,7.2,7.7] ]]
 
 text' (x, y) string = translate x y . scale 0.03 0.03  . color black
                      $ text string
@@ -91,11 +90,12 @@ indexate xs = zipWith (curry flip') xs [1..(length xs)]
 renderTuple :: ((Float, Float), [Float]) -> Float -> [Picture]
 renderTuple (_, []) _ = []
 renderTuple ((0, 0), _) _ = []
-renderTuple ((l, r), xs) step = [ text' (5 + 20 * cls l, 5 + 10 * fromIntegral ( fst x - 1 )) (take 4 $ show $ snd x)
-                            | x <- indexate $ sort xs]
+renderTuple ((l, r), xs) step = [ text'
+                                    (5 + 20 * cls l, 5 + 10 * fromIntegral ( fst x - 1 ))
+                                    (take 4 $ show $ snd x)
+                                    | x <- indexate $ sort xs]
                            where
                             cls = smallClosest step
-
 
 pics :: (Selection -> Float) -> Selection -> [Picture]
 pics f selection = [
@@ -103,8 +103,9 @@ pics f selection = [
     line [(-500, 0), (500, 0)],
     rotate 90 $ line [(-500, 0), (500, 0)] ] ++
     -- Coordinates text.
-    [ text' (x * 20, -4) (take 4 $ show x) | x <- [0,step .. maxEl ]] ++
-
+    [ text' (x * 20, -4)
+            (show $ round' 2 x) | x <- [0,step .. maxEl ]] ++
+    -- Optional rectangle wrappers for labels.
     --[ rectangle (5 * cl (fst x)) 0 20 (10 * snd x) | x <- sdata ] ++
      concat [ render x | x <- dt ]
     where
@@ -115,11 +116,13 @@ pics f selection = [
         cl = smallClosest step
         render = (`renderTuple` step)
 
+--round' :: Int -> Float -> Float
+round' n fl = fromInteger (round (fl * (10 ^ n))) / (10 ^ n)
 
 flip' (a, b) = (b, a)
-viewPort = ViewPort (-50, -50) (90*0) 2
+viewPort = ViewPort (-50, -100) (90*0) 3
 
 runW = do
     let window = InWindow "W" (900, 800) (100, 100)
-    display window  white ( applyViewPortToPicture viewPort $ pictures $ pics nDjun realData )
+    display window  white ( applyViewPortToPicture viewPort $ pictures $ pics n realData )
 
