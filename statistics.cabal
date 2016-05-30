@@ -18,6 +18,8 @@ library
   exposed-modules:     Stats
   build-depends:       base >= 4.7 && < 5
                       , gloss >= 1.10
+                      , random >= 0
+                      , crypto-api >= 0.13.2
   default-language:    Haskell2010
 
 executable statistics-exe
