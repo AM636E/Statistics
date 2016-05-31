@@ -42,11 +42,11 @@ intervalWidth f s = round' 2 ((max / min) / f s)
 
 allInRange :: IntervalFunc -> Float -> Selection -> [Float]
 allInRange f start a =
-    concat [ [x | x <- y, x >= start && x < (start + iw)  ] | y <- a ]
+    concat [ [x | x <- y, x >= start && x < ( (round' 2 start) + (round' 2 iw) - 0.001)  ] | y <- a ]
     where
         iw = intervalWidth f a
 
-groupSelection :: IntervalFunc  -> Selection -> Histogram
+groupSelection :: IntervalFunc -> Selection -> Histogram
 groupSelection _ [] = []
 groupSelection f a = [ tupleInRange $ round' 2 x | x <- [0,iw..max'] ]
     where
@@ -192,7 +192,7 @@ viewPort = ViewPort (-50, -100) (90*0) 6
 runW = do
     let window = InWindow "W" (900, 800) (100, 100)
     let hist = createHistogram n realData
-    --display window  white ( applyViewPortToPicture viewPort $ pictures $ pics nDjun realData )
-    display window white (applyViewPortToPicture viewPort $ pictures $ renderMap hist fi)
+    display window  white ( applyViewPortToPicture viewPort $ pictures $ pics nDjun realData )
+   -- display window white (applyViewPortToPicture viewPort $ pictures $ renderMap hist fi)
 
 
